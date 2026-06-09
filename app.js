@@ -384,14 +384,21 @@ $('refreshCals').onclick = async () => {
   };
   const stop = () => { listening = false; if (activeBtn) activeBtn.classList.remove('rec'); activeBtn = null; };
   rec.onend = stop;
-  rec.onerror = (e) => { stop(); if (e.error === 'not-allowed') alert('Microphone permission is needed for voice input.'); };
+  rec.onerror = (e) => {
+    stop();
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
+      note('🎤 Mic blocked. Allow microphone access. (Voice may not work in the installed app — try the Chrome browser tab.)');
+    else if (e.error !== 'no-speech' && e.error !== 'aborted')
+      note('🎤 voice error: ' + e.error);
+  };
 
   function listen(lang, btn) {
     if (listening) { rec.stop(); return; } // tapping either button while live stops it
     rec.lang = lang;
     base = inputEl.value.trim();
-    try { rec.start(); listening = true; activeBtn = btn; btn.classList.add('rec'); inputEl.focus(); }
-    catch { /* already started */ }
+    activeBtn = btn; listening = true; btn.classList.add('rec'); inputEl.focus(); // instant feedback
+    try { rec.start(); }
+    catch (err) { stop(); note('🎤 couldn’t start: ' + ((err && err.message) || err)); }
   }
   btnEn.onclick = () => listen('en-US', btnEn);
   btnJa.onclick = () => listen('ja-JP', btnJa);
@@ -402,7 +409,19 @@ if (!Claude.apiKey || Object.keys(Google.accounts).length === 0) {
   note('Welcome! Open Settings ⚙ to add your Claude API key and connect Google Calendar.');
 }
 
-/* PWA service worker */
+/* Version stamp (shown in Settings) — bump on each deploy so we can confirm what's live. */
+const APP_VERSION = 'v8';
+{ const v = $('ver'); if (v) v.textContent = APP_VERSION; }
+
+/* PWA service worker — register, check for updates, and auto-reload when a new one takes over. */
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+    .then((reg) => reg.update())
+    .catch(() => {});
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    location.reload();
+  });
 }
