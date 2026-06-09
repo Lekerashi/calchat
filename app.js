@@ -67,6 +67,12 @@ function buildSystem() {
     '- Choosing a calendar: if the user names one (e.g. "work"), match it. If it is genuinely ambiguous and they have several, ask one short question. Otherwise use the primary calendar.',
     '- After creating, changing, or deleting an event, confirm in one short sentence what you did (title, date, time, which calendar).',
     '- Be concise. Do not narrate routine steps or restate these instructions.',
+    '',
+    'People & the shared calendar:',
+    '- The user is Logan. Yuko is Logan\'s wife. They share a calendar whose name contains both their names (the "Logan + Yuko" calendar). Shane is another person they track.',
+    '- Whenever you create an event ON that shared calendar, set the create_event `people` field to whichever household members the event is for, using keys: logan, yuko, shane. The app automatically bookends the title with their emojis — you only need to identify who; give a plain `summary`.',
+    '- Infer who from context: "I/me/my" → [logan]; "Yuko" → [yuko]; "we/us/our" → [logan, yuko]; "Shane" → [shane]; combinations as appropriate. An outside guest (e.g. "lunch with Elmo") is not a household member — that is still logan\'s event, so people is [logan].',
+    '- This emoji convention applies ONLY to the shared calendar. For any other calendar, do not set people.',
   ].join('\n');
 }
 
@@ -90,6 +96,35 @@ function addHoursNaive(dtStr, hours) {
          `T${p(dt.getUTCHours())}:${p(dt.getUTCMinutes())}:${p(dt.getUTCSeconds())}`;
 }
 
+/* ---------- shared Logan + Yuko calendar: emoji bookend convention ----------
+ * Events on the shared calendar get their title bookended with each household
+ * member's emoji — canonical order as a prefix, mirrored as a suffix, so Logan
+ * is always first and last when involved. Easy to edit if names/emoji change. */
+const SHARED_CAL = {
+  // A connected calendar counts as "the shared calendar" if its name matches this.
+  match: (name) => /logan/i.test(name) && /yuko/i.test(name),
+  order: ['logan', 'yuko', 'shane'],         // canonical ordering
+  emoji: { logan: '🦌', yuko: '🦥', shane: '🐧' },
+};
+
+// Remove any existing bookend emoji/spaces so re-stamping is idempotent.
+function stripBookends(s) {
+  const set = new Set(Object.values(SHARED_CAL.emoji));
+  const chars = [...s.trim()];
+  let a = 0, b = chars.length;
+  while (a < b && (set.has(chars[a]) || chars[a] === ' ')) a++;
+  while (b > a && (set.has(chars[b - 1]) || chars[b - 1] === ' ')) b--;
+  return chars.slice(a, b).join('').trim();
+}
+
+function bookendSummary(summary, people) {
+  const present = SHARED_CAL.order.filter((p) => (people || []).includes(p));
+  if (!present.length) return summary;
+  const pre = present.map((p) => SHARED_CAL.emoji[p]).join('');
+  const suf = present.slice().reverse().map((p) => SHARED_CAL.emoji[p]).join('');
+  return `${pre} ${stripBookends(summary)} ${suf}`;
+}
+
 /* ---------- tool execution ---------- */
 async function runTool(name, input) {
   if (name === 'list_calendars') {
@@ -106,7 +141,15 @@ async function runTool(name, input) {
       ref = primary.ref;
     }
     const tz = input.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-    let body = { summary: input.summary };
+
+    // On the shared Logan + Yuko calendar, bookend the title with member emojis.
+    let summary = input.summary;
+    const calInfo = Google.listAllCalendars().find((c) => c.ref === ref);
+    if (calInfo && SHARED_CAL.match(calInfo.name) && input.people && input.people.length) {
+      summary = bookendSummary(summary, input.people);
+    }
+
+    let body = { summary };
     if (input.location) body.location = input.location;
     if (input.description) body.description = input.description;
 

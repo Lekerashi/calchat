@@ -43,6 +43,17 @@ const Claude = {
           timezone: { type: 'string', description: 'Timed events only: IANA zone of the event location, e.g. America/Denver or Asia/Tokyo.' },
           location: { type: 'string' },
           description: { type: 'string' },
+          people: {
+            type: 'array',
+            items: { type: 'string', enum: ['logan', 'yuko', 'shane'] },
+            description:
+              'Which household members this event belongs to / who is attending: ' +
+              'logan (the user), yuko (Logan\'s wife), shane. Include this whenever the event ' +
+              'is going on the shared Logan + Yuko calendar — the app uses it to add emoji ' +
+              'bookends to the title automatically. Do NOT list external guests (e.g. "Elmo") here; ' +
+              'a lunch with an outside friend is still just logan\'s event. Provide a plain title ' +
+              'in `summary` (no emojis) — the app adds them.',
+          },
         },
         required: ['summary'],
       },
