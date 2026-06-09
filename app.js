@@ -62,6 +62,7 @@ function buildSystem() {
     '',
     'Guidelines:',
     '- When the user describes a plan in plain language ("lunch with Elmo at 2pm Wednesday"), create the event with create_event.',
+    '- If a time is given or clearly implied, make a timed event. If the time is undecided/unstated and not obvious, make it an all-day event rather than inventing a clock time or asking.',
     '- When the user attaches a screenshot/photo of a ticket, flight, invite, etc., read the date, time, title and location from the image and create the event.',
     '- For "what\'s my schedule" / "am I free" questions, call list_events with NO refs so it pulls from every connected calendar, using a sensible time_min/time_max window.',
     '- Choosing a calendar: if the user names one (e.g. "work"), match it. Otherwise DEFAULT to the shared Logan + Yuko calendar — that is the user\'s preferred default.',
