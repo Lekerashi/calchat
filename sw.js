@@ -1,6 +1,6 @@
 /* sw.js — minimal service worker so the app is installable and the shell loads offline.
  * Only same-origin app files are cached. API calls to Anthropic/Google always go to the network. */
-const CACHE = 'calchat-v8';
+const CACHE = 'calchat-v9';
 const SHELL = [
   '.', 'index.html', 'styles.css', 'app.js', 'claude.js', 'google.js',
   'manifest.webmanifest', 'icons/icon.svg',

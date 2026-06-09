@@ -369,17 +369,14 @@ $('refreshCals').onclick = async () => {
   if (!SR) { btnEn.style.display = 'none'; btnJa.style.display = 'none'; return; }
   const rec = new SR();
   rec.interimResults = true;
-  rec.continuous = true;
+  rec.continuous = false; // single utterance — avoids the Android duplicate-result bug
   let listening = false, base = '', activeBtn = null;
 
   rec.onresult = (e) => {
-    let interim = '', final = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) final += t; else interim += t;
-    }
-    if (final) base = (base ? base + ' ' : '') + final.trim();
-    inputEl.value = (base + (interim ? ' ' + interim : '')).trim();
+    // Rebuild the whole transcript from all results each event (idempotent — never repeats).
+    let txt = '';
+    for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+    inputEl.value = ((base ? base + ' ' : '') + txt).trim();
     inputEl.dispatchEvent(new Event('input')); // resize the box
   };
   const stop = () => { listening = false; if (activeBtn) activeBtn.classList.remove('rec'); activeBtn = null; };
@@ -410,7 +407,7 @@ if (!Claude.apiKey || Object.keys(Google.accounts).length === 0) {
 }
 
 /* Version stamp (shown in Settings) — bump on each deploy so we can confirm what's live. */
-const APP_VERSION = 'v8';
+const APP_VERSION = 'v9';
 { const v = $('ver'); if (v) v.textContent = APP_VERSION; }
 
 /* PWA service worker — register, check for updates, and auto-reload when a new one takes over. */
