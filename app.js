@@ -421,7 +421,7 @@ if (!Claude.apiKey || Object.keys(Google.accounts).length === 0) {
 }
 
 /* Version stamp (shown in Settings) — bump on each deploy so we can confirm what's live. */
-const APP_VERSION = 'v11';
+const APP_VERSION = 'v12';
 { const v = $('ver'); if (v) v.textContent = APP_VERSION; }
 
 /* PWA service worker — register, check for updates, and auto-reload when a new one takes over. */
