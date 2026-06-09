@@ -362,6 +362,39 @@ $('refreshCals').onclick = async () => {
   catch (e) { alert('Refresh failed: ' + (e.message || e)); }
 };
 
+/* ---------- voice input (speech-to-text) ---------- */
+(function setupMic() {
+  const micBtn = $('micBtn');
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { micBtn.style.display = 'none'; return; } // unsupported browser
+  const rec = new SR();
+  rec.lang = navigator.language || 'en-US';
+  rec.interimResults = true;
+  rec.continuous = true;
+  let listening = false, base = '';
+
+  rec.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t; else interim += t;
+    }
+    if (final) base = (base ? base + ' ' : '') + final.trim();
+    inputEl.value = (base + (interim ? ' ' + interim : '')).trim();
+    inputEl.dispatchEvent(new Event('input')); // resize the box
+  };
+  const stop = () => { listening = false; micBtn.classList.remove('rec'); };
+  rec.onend = stop;
+  rec.onerror = (e) => { stop(); if (e.error === 'not-allowed') alert('Microphone permission is needed for voice input.'); };
+
+  micBtn.onclick = () => {
+    if (listening) { rec.stop(); return; }
+    base = inputEl.value.trim();
+    try { rec.start(); listening = true; micBtn.classList.add('rec'); inputEl.focus(); }
+    catch { /* already started */ }
+  };
+})();
+
 /* First-run hint — only until both the API key and a Google account are set up. */
 if (!Claude.apiKey || Object.keys(Google.accounts).length === 0) {
   note('Welcome! Open Settings ⚙ to add your Claude API key and connect Google Calendar.');

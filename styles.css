@@ -50,6 +50,8 @@ body {
 }
 .icon-btn:active { transform: scale(0.96); }
 .icon-btn.send { background: var(--me); border-color: var(--me); }
+.icon-btn.rec { background: #dc2626; border-color: #dc2626; animation: pulse 1.1s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
 
 #messages {
   flex: 1;
