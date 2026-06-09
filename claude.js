@@ -41,7 +41,7 @@ const Claude = {
           start_date: { type: 'string', description: 'All-day events: YYYY-MM-DD start.' },
           end_date: { type: 'string', description: 'All-day events: YYYY-MM-DD last day, inclusive. Optional.' },
           timezone: { type: 'string', description: 'Timed events only: IANA zone of the event location, e.g. America/Denver or Asia/Tokyo.' },
-          location: { type: 'string' },
+          location: { type: 'string', description: 'Venue or address if the user mentions one (e.g. "Sunshine Cinema Ikebukuro"). Keep it as a place name/address that maps apps can find. Also use the location to infer the correct timezone.' },
           description: { type: 'string' },
           people: {
             type: 'array',
