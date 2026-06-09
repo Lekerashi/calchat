@@ -370,19 +370,25 @@ $('refreshCals').onclick = async () => {
   const rec = new SR();
   rec.interimResults = true;
   rec.continuous = false; // single utterance — avoids the Android duplicate-result bug
-  let listening = false, base = '', activeBtn = null;
+  let listening = false, base = '', activeBtn = null, gotResult = false;
 
   rec.onresult = (e) => {
+    gotResult = true;
     // Rebuild the whole transcript from all results each event (idempotent — never repeats).
     let txt = '';
     for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
     inputEl.value = ((base ? base + ' ' : '') + txt).trim();
     inputEl.dispatchEvent(new Event('input')); // resize the box
   };
-  const stop = () => { listening = false; if (activeBtn) activeBtn.classList.remove('rec'); activeBtn = null; };
-  rec.onend = stop;
+  const clear = () => { listening = false; if (activeBtn) activeBtn.classList.remove('rec'); activeBtn = null; };
+  rec.onend = () => {
+    clear();
+    // Hands-free: once you stop speaking, send it automatically (like a voice note).
+    if (gotResult && inputEl.value.trim()) send();
+  };
   rec.onerror = (e) => {
-    stop();
+    gotResult = false; // never auto-send on error
+    clear();
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
       note('🎤 Mic blocked. Allow microphone access. (Voice may not work in the installed app — try the Chrome browser tab.)');
     else if (e.error !== 'no-speech' && e.error !== 'aborted')
@@ -390,12 +396,13 @@ $('refreshCals').onclick = async () => {
   };
 
   function listen(lang, btn) {
-    if (listening) { rec.stop(); return; } // tapping either button while live stops it
+    if (listening) { rec.stop(); return; } // tap again to stop early (still sends what was heard)
     rec.lang = lang;
     base = inputEl.value.trim();
+    gotResult = false;
     activeBtn = btn; listening = true; btn.classList.add('rec'); inputEl.focus(); // instant feedback
     try { rec.start(); }
-    catch (err) { stop(); note('🎤 couldn’t start: ' + ((err && err.message) || err)); }
+    catch (err) { clear(); note('🎤 couldn’t start: ' + ((err && err.message) || err)); }
   }
   btnEn.onclick = () => listen('en-US', btnEn);
   btnJa.onclick = () => listen('ja-JP', btnJa);
@@ -407,7 +414,7 @@ if (!Claude.apiKey || Object.keys(Google.accounts).length === 0) {
 }
 
 /* Version stamp (shown in Settings) — bump on each deploy so we can confirm what's live. */
-const APP_VERSION = 'v9';
+const APP_VERSION = 'v10';
 { const v = $('ver'); if (v) v.textContent = APP_VERSION; }
 
 /* PWA service worker — register, check for updates, and auto-reload when a new one takes over. */
