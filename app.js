@@ -362,16 +362,15 @@ $('refreshCals').onclick = async () => {
   catch (e) { alert('Refresh failed: ' + (e.message || e)); }
 };
 
-/* ---------- voice input (speech-to-text) ---------- */
+/* ---------- voice input (speech-to-text) — English + Japanese ---------- */
 (function setupMic() {
-  const micBtn = $('micBtn');
+  const btnEn = $('micEn'), btnJa = $('micJa');
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { micBtn.style.display = 'none'; return; } // unsupported browser
+  if (!SR) { btnEn.style.display = 'none'; btnJa.style.display = 'none'; return; }
   const rec = new SR();
-  rec.lang = navigator.language || 'en-US';
   rec.interimResults = true;
   rec.continuous = true;
-  let listening = false, base = '';
+  let listening = false, base = '', activeBtn = null;
 
   rec.onresult = (e) => {
     let interim = '', final = '';
@@ -383,16 +382,19 @@ $('refreshCals').onclick = async () => {
     inputEl.value = (base + (interim ? ' ' + interim : '')).trim();
     inputEl.dispatchEvent(new Event('input')); // resize the box
   };
-  const stop = () => { listening = false; micBtn.classList.remove('rec'); };
+  const stop = () => { listening = false; if (activeBtn) activeBtn.classList.remove('rec'); activeBtn = null; };
   rec.onend = stop;
   rec.onerror = (e) => { stop(); if (e.error === 'not-allowed') alert('Microphone permission is needed for voice input.'); };
 
-  micBtn.onclick = () => {
-    if (listening) { rec.stop(); return; }
+  function listen(lang, btn) {
+    if (listening) { rec.stop(); return; } // tapping either button while live stops it
+    rec.lang = lang;
     base = inputEl.value.trim();
-    try { rec.start(); listening = true; micBtn.classList.add('rec'); inputEl.focus(); }
+    try { rec.start(); listening = true; activeBtn = btn; btn.classList.add('rec'); inputEl.focus(); }
     catch { /* already started */ }
-  };
+  }
+  btnEn.onclick = () => listen('en-US', btnEn);
+  btnJa.onclick = () => listen('ja-JP', btnJa);
 })();
 
 /* First-run hint — only until both the API key and a Google account are set up. */
