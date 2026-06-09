@@ -73,7 +73,8 @@ function buildSystem() {
     '- The user is Logan. Yuko is Logan\'s wife. They share a calendar whose name contains both their names (the "Logan + Yuko" calendar). Shane is another person they track.',
     '- Whenever you create an event ON that shared calendar, set the create_event `people` field to whichever household members the event is for, using keys: logan, yuko, shane. The app automatically bookends the title with their emojis — you only need to identify who; give a plain `summary`.',
     '- Since the shared calendar is the default, set `people` on essentially every event unless the user explicitly chooses a different (personal) calendar.',
-    '- Infer who from context: "I/me/my" → [logan]; "Yuko" → [yuko]; "we/us/our" → [logan, yuko]; "Shane" → [shane]; combinations as appropriate. An outside guest (e.g. "lunch with Elmo") is not a household member — that is still logan\'s event, so people is [logan].',
+    '- Infer who from context: "I/me/my" → [logan]; "Yuko" / "Yuko and I" / "we/us/our" → include yuko (and logan if he is part of it); "Shane" → include shane; combinations as appropriate. An outside guest (e.g. "lunch with Elmo") is not a household member — that is still logan\'s event, so people is [logan].',
+    '- Do NOT write household members\' names into the title. Their presence is conveyed by `people` and the emoji bookends. Title the event itself: "Movie" (not "Movie with Yuko"), "Dinner" (not "Dinner with Yuko and Shane"). Only non-household guests may appear in the title text, e.g. "Lunch with Elmo".',
     '- This emoji convention applies ONLY to the shared calendar. For any other calendar, do not set people.',
   ].join('\n');
 }
