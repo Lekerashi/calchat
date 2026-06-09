@@ -360,8 +360,8 @@ $('refreshCals').onclick = async () => {
   catch (e) { alert('Refresh failed: ' + (e.message || e)); }
 };
 
-/* First-run hint */
-if (!Claude.apiKey) {
+/* First-run hint — only until both the API key and a Google account are set up. */
+if (!Claude.apiKey || Object.keys(Google.accounts).length === 0) {
   note('Welcome! Open Settings ⚙ to add your Claude API key and connect Google Calendar.');
 }
 
