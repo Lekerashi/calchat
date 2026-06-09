@@ -64,13 +64,14 @@ function buildSystem() {
     '- When the user describes a plan in plain language ("lunch with Elmo at 2pm Wednesday"), create the event with create_event.',
     '- When the user attaches a screenshot/photo of a ticket, flight, invite, etc., read the date, time, title and location from the image and create the event.',
     '- For "what\'s my schedule" / "am I free" questions, call list_events with NO refs so it pulls from every connected calendar, using a sensible time_min/time_max window.',
-    '- Choosing a calendar: if the user names one (e.g. "work"), match it. If it is genuinely ambiguous and they have several, ask one short question. Otherwise use the primary calendar.',
+    '- Choosing a calendar: if the user names one (e.g. "work"), match it. Otherwise DEFAULT to the shared Logan + Yuko calendar — that is the user\'s preferred default.',
     '- After creating, changing, or deleting an event, confirm in one short sentence what you did (title, date, time, which calendar).',
     '- Be concise. Do not narrate routine steps or restate these instructions.',
     '',
     'People & the shared calendar:',
     '- The user is Logan. Yuko is Logan\'s wife. They share a calendar whose name contains both their names (the "Logan + Yuko" calendar). Shane is another person they track.',
     '- Whenever you create an event ON that shared calendar, set the create_event `people` field to whichever household members the event is for, using keys: logan, yuko, shane. The app automatically bookends the title with their emojis — you only need to identify who; give a plain `summary`.',
+    '- Since the shared calendar is the default, set `people` on essentially every event unless the user explicitly chooses a different (personal) calendar.',
     '- Infer who from context: "I/me/my" → [logan]; "Yuko" → [yuko]; "we/us/our" → [logan, yuko]; "Shane" → [shane]; combinations as appropriate. An outside guest (e.g. "lunch with Elmo") is not a household member — that is still logan\'s event, so people is [logan].',
     '- This emoji convention applies ONLY to the shared calendar. For any other calendar, do not set people.',
   ].join('\n');
@@ -135,10 +136,11 @@ async function runTool(name, input) {
   if (name === 'create_event') {
     let ref = input.ref;
     if (!ref) {
+      // Default to the shared Logan + Yuko calendar; fall back to a primary calendar.
       const cals = Google.listAllCalendars();
-      const primary = cals.find(c => c.primary) || cals[0];
-      if (!primary) return 'No calendar available. Ask the user to connect a Google account first.';
-      ref = primary.ref;
+      const target = cals.find(c => SHARED_CAL.match(c.name)) || cals.find(c => c.primary) || cals[0];
+      if (!target) return 'No calendar available. Ask the user to connect a Google account first.';
+      ref = target.ref;
     }
     const tz = input.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
