@@ -90,22 +90,35 @@ const Claude = {
 
   async call(messages, system) {
     if (!this.apiKey) throw new Error('Add your Anthropic API key in Settings (⚙).');
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': this.apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: this.model,
-        max_tokens: 4096,
-        system,
-        tools: this.tools,
-        messages,
-      }),
-    });
+    // Abort a stalled request instead of hanging forever. A never-settling fetch
+    // (flaky mobile network) used to wedge the send loop's busy flag, freezing the app.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 90000);
+    let res;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': this.apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: this.model,
+          max_tokens: 4096,
+          system,
+          tools: this.tools,
+          messages,
+        }),
+        signal: ctrl.signal,
+      });
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('Request timed out — check your connection and try again.');
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
     if (!res.ok) {
       const text = await res.text();
       throw new Error('Claude API ' + res.status + ': ' + text);

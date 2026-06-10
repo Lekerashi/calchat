@@ -64,6 +64,7 @@ function buildSystem() {
     '- When the user describes a plan in plain language ("lunch with Elmo at 2pm Wednesday"), create the event with create_event.',
     '- If a time is given or clearly implied, make a timed event. If the time is undecided/unstated and not obvious, make it an all-day event rather than inventing a clock time or asking.',
     '- When the user attaches a screenshot/photo of a ticket, flight, invite, etc., read the date, time, title and location from the image and create the event.',
+    '- When a venue or address is given, put it in the create_event `location` field ONLY — do NOT repeat it in the title (no "Dinner at Joe\'s Diner"). Keep `summary` to the event itself ("Dinner"); the location field already carries the where.',
     '- For "what\'s my schedule" / "am I free" questions, call list_events with NO refs so it pulls from every connected calendar, using a sensible time_min/time_max window.',
     '- Choosing a calendar: if the user names one (e.g. "work"), match it. Otherwise DEFAULT to the shared Logan + Yuko calendar — that is the user\'s preferred default.',
     '- After creating, changing, or deleting an event, confirm in one short sentence what you did (title, date, time, which calendar).',
@@ -421,7 +422,7 @@ if (!Claude.apiKey || Object.keys(Google.accounts).length === 0) {
 }
 
 /* Version stamp (shown in Settings) — bump on each deploy so we can confirm what's live. */
-const APP_VERSION = 'v12';
+const APP_VERSION = 'v13';
 { const v = $('ver'); if (v) v.textContent = APP_VERSION; }
 
 /* PWA service worker — register, check for updates, and auto-reload when a new one takes over. */

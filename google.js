@@ -117,13 +117,27 @@ const Google = {
   async apiFetch(email, url, opts = {}) {
     const token = await this.validToken(email);
     opts.headers = Object.assign({}, opts.headers, { Authorization: 'Bearer ' + token });
-    let res = await fetch(url, opts);
+    let res = await this._fetchTimeout(url, opts);
     if (res.status === 401) { // token rejected — force one refresh and retry
       this.accounts[email].expiresAt = 0;
       opts.headers.Authorization = 'Bearer ' + (await this.validToken(email));
-      res = await fetch(url, opts);
+      res = await this._fetchTimeout(url, opts);
     }
     return res;
+  },
+
+  // fetch that aborts after 30s — a hung calendar request must not freeze the chat.
+  async _fetchTimeout(url, opts = {}) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 30000);
+    try {
+      return await fetch(url, Object.assign({}, opts, { signal: ctrl.signal }));
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('Google Calendar request timed out.');
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
   },
 
   async createEvent(ref, body) {
