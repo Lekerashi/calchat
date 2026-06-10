@@ -1,7 +1,7 @@
 /* sw.js — network-first service worker.
  * Always loads the latest version when online; falls back to cache only when offline.
  * No pre-cache list, so an install can never get wedged by a single failed fetch. */
-const CACHE = 'calchat-v13';
+const CACHE = 'calchat-v14';
 
 self.addEventListener('install', () => self.skipWaiting());
 

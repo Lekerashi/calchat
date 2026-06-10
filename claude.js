@@ -45,10 +45,10 @@ const Claude = {
           description: { type: 'string' },
           people: {
             type: 'array',
-            items: { type: 'string', enum: ['logan', 'yuko', 'shane'] },
+            items: { type: 'string', enum: ['logan', 'yuko', 'shane', 'misaki'] },
             description:
               'Which household members this event belongs to / who is attending: ' +
-              'logan (the user), yuko (Logan\'s wife), shane. Include this whenever the event ' +
+              'logan (the user), yuko (Logan\'s wife), shane, misaki. Include this whenever the event ' +
               'is going on the shared Logan + Yuko calendar — the app uses it to add emoji ' +
               'bookends to the title automatically. Do NOT list external guests (e.g. "Elmo") here; ' +
               'a lunch with an outside friend is still just logan\'s event. Provide a plain title ' +
